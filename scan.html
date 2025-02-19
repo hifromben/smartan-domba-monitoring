@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan QR Code</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            font-size: 24px;
+        }
+        #reader-container {
+            position: relative;
+            display: inline-block;
+            margin: 20px auto;
+        }
+        #reader-container video {
+            width: 100%;
+            max-width: 500px;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #007bff;
+        }
+        .button-container {
+            margin-top: 20px;
+        }
+        .button-container button {
+            margin: 5px;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .button-container button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+</head>
+<body>
+    <h1>Scan QR Code</h1>
+    <div id="reader-container">
+        <!-- Preview kamera -->
+        <video id="camera-preview" autoplay playsinline></video>
+    </div>
+    <p id="result">Hasil pemindaian akan muncul di sini.</p>
+    <div class="button-container">
+        <button id="flash-toggle">FLASH ON</button>
+        <button id="switch-camera">FRONT CAMERA</button>
+        <button id="pause">pause</button>
+        <button id="resume">resume</button>
+    </div>
+
+    <script>
+        let html5QrCode;
+        let currentCamera = "environment"; // Default kamera belakang
+        let flashState = false;
+        let videoElement = document.getElementById("camera-preview");
+
+        async function requestCameraPermission() {
+            try {
+                console.log("Meminta izin kamera...");
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true
+                });
+                stream.getTracks().forEach(track => track.stop()); // Stop stream setelah mendapat izin
+                console.log("Izin kamera diberikan.");
+                return true;
+            } catch (error) {
+                console.error("Gagal meminta izin kamera:", error.message);
+                alert(`Gagal meminta izin kamera: ${error.message}`);
+                return false;
+            }
+        }
+
+        async function startCameraPreview() {
+            try {
+                console.log("Memulai preview kamera...");
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: currentCamera },
+                });
+                videoElement.srcObject = stream;
+                console.log("Preview kamera berhasil dimulai.");
+            } catch (error) {
+                console.error("Error saat mengakses kamera:", error.message);
+                alert("Gagal mengakses kamera. Pastikan browser memiliki izin akses.");
+            }
+        }
+
+        async function startScanner() {
+            try {
+                console.log("Memulai scanner QR...");
+                html5QrCode = new Html5Qrcode("reader-container");
+                await html5QrCode.start(
+                    { facingMode: currentCamera },
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 }, // Area deteksi QR
+                    },
+                    (decodedText) => {
+                        console.log("QR Code terdeteksi:", decodedText);
+                        document.getElementById("result").textContent = `Hasil: ${decodedText}`;
+                    },
+                    (error) => {
+                        console.warn("Tidak ada QR Code terdeteksi:", error.message);
+                    }
+                );
+                console.log("Scanner QR berhasil dimulai.");
+            } catch (error) {
+                console.error("Error memulai scanner:", error.message);
+                alert(`Error memulai scanner: ${error.message}`);
+            }
+        }
+
+        // Ganti kamera
+        async function switchCamera() {
+            try {
+                console.log("Mengganti kamera...");
+                currentCamera = currentCamera === "environment" ? "user" : "environment";
+                await stopCameraPreview();
+                await startCameraPreview();
+                console.log("Kamera berhasil diganti.");
+            } catch (error) {
+                console.error("Error mengganti kamera:", error.message);
+            }
+        }
+
+        // Stop kamera
+        async function stopCameraPreview() {
+            try {
+                console.log("Menghentikan preview kamera...");
+                const stream = videoElement.srcObject;
+                if (stream) {
+                    const tracks = stream.getTracks();
+                    tracks.forEach((track) => track.stop());
+                }
+                videoElement.srcObject = null;
+                console.log("Preview kamera berhasil dihentikan.");
+            } catch (error) {
+                console.error("Error menghentikan kamera:", error.message);
+            }
+        }
+
+        // Toggle Flash
+        async function toggleFlash() {
+            try {
+                console.log("Mengatur flash...");
+                flashState = !flashState;
+                const track = videoElement.srcObject.getVideoTracks()[0];
+                await track.applyConstraints({
+                    advanced: [{ torch: flashState }],
+                });
+                document.getElementById("flash-toggle").textContent = flashState ? "FLASH OFF" : "FLASH ON";
+                console.log(`Flash ${flashState ? "diaktifkan" : "dimatikan"}.`);
+            } catch (error) {
+                console.error("Tidak dapat mengatur flash:", error.message);
+            }
+        }
+
+        // Pause dan Resume Scanner
+        document.getElementById("pause").addEventListener("click", () => {
+            console.log("Scanner dijeda.");
+            html5QrCode.pause();
+        });
+        document.getElementById("resume").addEventListener("click", () => {
+            console.log("Scanner dilanjutkan.");
+            html5QrCode.resume();
+        });
+        document.getElementById("switch-camera").addEventListener("click", switchCamera);
+        document.getElementById("flash-toggle").addEventListener("click", toggleFlash);
+
+        // Pastikan izin kamera sudah diberikan sebelum memulai preview dan scanner
+        (async () => {
+            const permissionGranted = await requestCameraPermission();
+            if (permissionGranted) {
+                await startCameraPreview();
+                await startScanner();
+            }
+        })();
+    </script>
+</body>
+</html>

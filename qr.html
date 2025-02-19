@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan QR Code</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            font-size: 24px;
+        }
+        #qrcode {
+            margin: 20px auto;
+        }
+        p {
+            color: #555;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Scan QR Code untuk Akses Aplikasi</h1>
+    <div id="qrcode"></div>
+    <p>Gunakan kamera atau aplikasi QR Code scanner untuk mengakses halaman utama.</p>
+    <a href="index.html" class="btn">Buka Halaman Utama</a>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        const serverUrl = window.location.hostname + ':5000'; // IP server Flask
+        const qrCodeUrl = `http://${serverUrl}/index.html`; // URL yang akan ditampilkan di QR Code
+
+        // Generate QR code
+        new QRCode(document.getElementById("qrcode"), {
+            text: qrCodeUrl,
+            width: 200,
+            height: 200,
+        });
+    </script>
+</body>
+</html>

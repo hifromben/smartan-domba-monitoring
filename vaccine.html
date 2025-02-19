@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Vaksin Domba</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            color: white;
+            background: linear-gradient(135deg, #A06CD5, #6D28D9);
+        }
+
+        header {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #fff;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            color: #fff;
+            position: relative;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 15px;
+            border-collapse: collapse;
+        }
+
+        table th, table td {
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            text-align: left;
+            color: white;
+        }
+
+        table th {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Perbaikan hanya pada bagian form */
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        form label {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: left;
+            width: 100%;
+            max-width: 400px;
+            color: white;
+        }
+
+        form input, form button {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-align: center;
+        }
+
+        form input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        form input[type="date"] {
+            text-align: center;
+        }
+
+        form button {
+            background: #8B5CF6;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        form button:hover {
+            background: #6D28D9;
+        }
+
+        .action-btn {
+            display: inline-block;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: bold;
+            background: #E57373;
+            color: white;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #D32F2F;
+        }
+
+        .back-button {
+            display: block;
+            margin-top: 20px;
+            padding: 10px;
+            background: #8B5CF6;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: #6D28D9;
+        }
+    </style>
+</head>
+<body>
+    <header>Riwayat Vaksin Domba</header>
+    
+    <main>
+        <div class="container">
+            <h2>Tambah Riwayat Vaksin</h2>
+            <form id="vaccineForm">
+                <label for="id_domba">ID Domba:</label>
+                <input type="text" id="id_domba" placeholder="Masukkan ID Domba" required>
+
+                <label for="jenis_vaksin">Jenis Vaksin:</label>
+                <input type="text" id="jenis_vaksin" placeholder="Masukkan Jenis Vaksin" required>
+
+                <label for="tanggal">Tanggal Vaksin:</label>
+                <input type="date" id="tanggal" required>
+
+                <button type="submit">Simpan Data Vaksin</button>
+            </form>
+        </div>
+
+        <div class="container">
+            <h2>Data Riwayat Vaksin</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Jenis Vaksin</th>
+                        <th>Tanggal</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="vaccineTableBody">
+                    <tr><td colspan="3">Memuat data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <a href="index.html" class="back-button">Kembali ke Halaman Utama</a>
+    </main>
+
+    <script>
+        const baseUrl = 'http://10.0.103.88:5000/api/vaccine';
+
+        async function loadVaccineData(id_domba) {
+            const tableBody = document.getElementById('vaccineTableBody');
+            tableBody.innerHTML = '<tr><td colspan="3">Memuat data...</td></tr>';
+
+            try {
+                const response = await fetch(`${baseUrl}/${id_domba}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    tableBody.innerHTML = data.riwayat_vaksin.map((vaccine, index) => `
+                        <tr>
+                            <td>${vaccine.jenis_vaksin}</td>
+                            <td>${vaccine.tanggal}</td>
+                            <td><button class="action-btn" onclick="deleteVaccine('${id_domba}', ${index})">Hapus</button></td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="3">Tidak ada data</td></tr>';
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                tableBody.innerHTML = '<tr><td colspan="3">Gagal memuat data</td></tr>';
+            }
+        }
+
+        async function deleteVaccine(id_domba, index) {
+            if (!confirm("Apakah Anda yakin ingin menghapus data ini?")) return;
+
+            try {
+                const response = await fetch(`${baseUrl}/${id_domba}/${index}`, { method: 'DELETE' });
+                if (response.ok) {
+                    alert("✅ Data vaksin berhasil dihapus!");
+                    loadVaccineData(id_domba); // Memuat ulang data setelah dihapus
+                } else {
+                    alert("❌ Gagal menghapus data vaksin.");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("⚠️ Terjadi kesalahan saat menghapus data.");
+            }
+        }
+
+        document.getElementById('vaccineForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id_domba = document.getElementById('id_domba').value.trim();
+            const jenis_vaksin = document.getElementById('jenis_vaksin').value.trim();
+            const tanggal = document.getElementById('tanggal').value.trim();
+
+            await fetch(baseUrl, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ id_domba, jenis_vaksin, tanggal }) 
+            });
+            loadVaccineData(id_domba);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadVaccineData('12345');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smartan - Monitoring Domba Garut</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            color: #fff;
+            background: linear-gradient(135deg, #A06CD5, #6D28D9);
+        }
+
+        header {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #fff;
+        }
+
+        .info-card, .sensor-data, .history-card {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto 20px;
+            text-align: left;
+            backdrop-filter: blur(10px);
+            color: #fff;
+            position: relative;
+        }
+
+        .info-card h2, .sensor-data h2, .history-card h2 {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .info-card img {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .identity-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .identity-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 5px;
+        }
+
+        .edit-btn {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            background: #8B5CF6;
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn:hover {
+            background: #6D28D9;
+        }
+
+        .sensor-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-radius: 12px;
+            background: #fff;
+            color: #6D28D9;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 10px;
+            border-collapse: collapse;
+        }
+
+        table th, table td {
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            text-align: left;
+            color: white;
+        }
+
+        table th {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Memberikan jarak antara tabel dan tombol "Tambah Riwayat Vaksin" */
+        .history-card table {
+            margin-bottom: 15px;
+        }
+
+        .history-card a {
+            font-size: 18px;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: #fff;
+            background: #8B5CF6;
+            transition: all 0.3s ease;
+            display: block;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .history-card a:hover {
+            background: #6D28D9;
+        }
+    </style>
+</head>
+<body>
+    <header>Smartan - Monitoring Domba Garut</header>
+    
+    <main>
+        <!-- Identitas Domba (Tidak Diubah) -->
+        <div class="info-card">
+            <h2>Identitas Domba</h2>
+            <img id="domba-photo" src="https://via.placeholder.com/500x200?text=Foto+Domba" alt="Foto Domba">
+            
+            <div class="identity-info">
+                <div class="identity-row">
+                    <strong>Nama:</strong> <span id="domba-name">Domba Garut</span>
+                </div>
+                <div class="identity-row">
+                    <strong>Umur:</strong> <span id="domba-age">1 Tahun</span>
+                </div>
+                <div class="identity-row">
+                    <strong>Jenis Kelamin:</strong> <span id="domba-gender">Jantan</span>
+                </div>
+                <div class="identity-row">
+                    <strong>Keturunan:</strong> <span id="domba-breed">Garut Asli</span>
+                </div>
+            </div>
+
+            <a href="edit_identity.html" class="edit-btn">Edit Identitas</a>
+        </div>
+
+        <!-- Data Realtime -->
+        <div class="sensor-data">
+            <h2>Data Realtime</h2>
+            <div class="sensor-box">
+                <span>Suhu</span> <span id="suhu">--</span>°C
+            </div>
+            <div class="sensor-box">
+                <span>Berat</span> <span id="berat">--</span>kg
+            </div>
+            <div class="sensor-box">
+                <span>Tinggi</span> <span id="tinggi">--</span>cm
+            </div>
+        </div>
+
+        <!-- Riwayat Vaksin -->
+        <div class="history-card">
+            <h2>Riwayat Vaksin</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Jenis Vaksin</th>
+                        <th>Tanggal</th>
+                    </tr>
+                </thead>
+                <tbody id="vaccine-history">
+                    <tr><td colspan="2">Memuat data...</td></tr>
+                </tbody>
+            </table>
+            <a href="vaccine.html">Tambah Riwayat Vaksin</a>
+        </div>
+    </main>
+
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Memuat data identitas dari localStorage
+            const dombaPhoto = localStorage.getItem('dombaPhoto');
+            const dombaName = localStorage.getItem('dombaName');
+            const dombaAge = localStorage.getItem('dombaAge');
+            const dombaBreed = localStorage.getItem('dombaBreed');
+            const dombaGender = localStorage.getItem('dombaGender');
+
+            if (dombaPhoto) document.getElementById('domba-photo').src = dombaPhoto;
+            if (dombaName) document.getElementById('domba-name').textContent = dombaName;
+            if (dombaAge) document.getElementById('domba-age').textContent = dombaAge;
+            if (dombaBreed) document.getElementById('domba-breed').textContent = dombaBreed;
+            if (dombaGender) document.getElementById('domba-gender').textContent = dombaGender;
+
+            // Memuat riwayat vaksin
+            const vaccineHistory = document.getElementById('vaccine-history');
+            try {
+                const response = await fetch('http://10.0.103.88:5000/api/vaccine/12345');
+                if (response.ok) {
+                    const data = await response.json();
+                    vaccineHistory.innerHTML = data.riwayat_vaksin.map(v => `
+                        <tr>
+                            <td>${v.jenis_vaksin}</td>
+                            <td>${v.tanggal}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                vaccineHistory.innerHTML = '<tr><td colspan="2">Gagal memuat data</td></tr>';
+            }
+        });
+
+        function getRandomDecimal(base) {
+    return (base + (Math.random() * 0.09)).toFixed(2);
+}
+
+function updateFakeSensorData() {
+    document.getElementById('suhu').textContent = getRandomDecimal(36);
+    document.getElementById('berat').textContent = getRandomDecimal(45);
+    document.getElementById('tinggi').textContent = getRandomDecimal(60);
+}
+
+setInterval(updateFakeSensorData, 2000); // Update setiap 2 detik
+updateFakeSensorData(); // Menjalankan pertama kali saat halaman dimuat
+
+    </script>
+</body>
+</html>
