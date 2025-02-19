@@ -176,4 +176,7 @@ def serve_static_file(filename):
 # ✅ **Menjalankan aplikasi Flask**
 # ==========================================================
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    import os
+    port = int(os.environ.get("PORT", 5000))  # Gunakan PORT dari environment Railway
+    app.run(host='0.0.0.0', port=port, debug=True)
+
